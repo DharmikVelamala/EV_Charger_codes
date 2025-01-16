@@ -1,0 +1,10 @@
+17:42:18 **** Incremental Build of configuration Debug for project iso ****
+make -j8 all 
+arm-none-eabi-size   iso.elf 
+   text	   data	    bss	    dec	    hex	filename
+  15088	    128	   1784	  17000	   4268	iso.elf
+Finished building: default.size.stdout
+ 
+
+17:42:18 Build Finished. 0 errors, 0 warnings. (took 666ms)
+

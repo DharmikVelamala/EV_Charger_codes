@@ -1,0 +1,5 @@
+main.c:20:5:main	1
+main.c:51:7:calculate_voltage	8
+main.c:72:6:send_uart_response	1
+main.c:82:6:SystemClock_Config	1
+main.c:110:6:Error_Handler	1

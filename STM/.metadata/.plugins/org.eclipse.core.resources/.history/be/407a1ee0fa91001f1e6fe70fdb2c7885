@@ -1,0 +1,9 @@
+#ifndef __TIM_H
+#define __TIM_H
+
+#include "stm32f4xx_hal_conf.h"
+
+// Function prototypes
+void MX_TIM_Init(void);
+
+#endif /* __TIM_H */

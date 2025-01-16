@@ -1,0 +1,192 @@
+/* Includes ------------------------------------------------------------------*/
+#include "main.h"
+#include "tim.h"
+#include "usart.h"
+#include "gpio.h"
+#include <stdio.h>
+
+/* Private variables ---------------------------------------------------------*/
+char uart_buffer[50];
+uint32_t pwm_duty_cycle;
+uint32_t pwm_frequency;
+float voltage_response;
+
+/* Private function prototypes -----------------------------------------------*/
+void SystemClock_Config(void);
+void send_uart_response(float voltage);
+float calculate_voltage(uint32_t duty_cycle);
+
+/* Main Program */
+int main(void)
+{
+    /* Initialize all configured peripherals */
+    HAL_Init();
+    SystemClock_Config();
+    MX_GPIO_Init();
+    MX_USART2_UART_Init();   // UART for sending responses
+    MX_TIM2_Init();          // Timer for PWM Input Capture
+
+    /* Start PWM input capture */
+    HAL_TIM_IC_Start(&htim2, TIM_CHANNEL_1);
+
+    /* Infinite loop */
+    while (1)
+    {
+        /* Get the PWM duty cycle */
+        pwm_duty_cycle = __HAL_TIM_GET_COMPARE(&htim2, TIM_CHANNEL_1);
+        pwm_frequency = HAL_RCC_GetHCLKFreq() / (__HAL_TIM_GET_AUTORELOAD(&htim2) + 1);
+
+        /* Calculate the corresponding voltage based on the duty cycle */
+        voltage_response = calculate_voltage(pwm_duty_cycle);
+
+        /* Send the calculated voltage via UART */
+        send_uart_response(voltage_response);
+
+        /* Delay between transmissions */
+        HAL_Delay(1000);  // Delay 1 second before next response
+    }
+}
+
+/* Function to calculate voltage based on duty cycle */
+float calculate_voltage(uint32_t duty_cycle)
+{
+    if (duty_cycle == 100) {
+        return 0.0;  // Standby/Vehicle Detection
+    } else if (duty_cycle == 10) {
+        return 2.7;  // Cable plugged in
+    } else if (duty_cycle == 50) {
+        return 7.0;  // Charging state
+    } else if (duty_cycle == 95) {
+        return 12.0;  // Charging complete
+    } else if (duty_cycle == 5) {
+        return 0.0;  // Fault state
+    } else if (duty_cycle == 20) {
+        return 3.6;  // Ready to charge
+    } else if (duty_cycle == 30) {
+        return 5.5;  // Charging with renewable energy
+    }
+    return 0.0;  // Default or unknown state
+}
+
+/* Function to send voltage response via UART */
+void send_uart_response(float voltage)
+{
+//    snprintf(uart_buffer, sizeof(uart_buffer), "Voltage: %.2f V\r\n", voltage);
+    HAL_UART_Transmit(&huart2, (uint8_t *)uart_buffer, strlen(uart_buffer), HAL_MAX_DELAY);
+}
+
+/* System Clock Configuration */
+void SystemClock_Config(void)
+{
+    RCC_OscInitTypeDef RCC_OscInitStruct = {0};
+    RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+
+    /** Configure the main internal regulator output voltage */
+    __HAL_RCC_PWR_CLK_ENABLE();
+    __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
+
+    /** Initializes the RCC Oscillators according to the specified parameters
+    * in the RCC_OscInitTypeDef structure. */
+    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+    RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+    RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+    RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+    RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
+    RCC_OscInitStruct.PLL.PLLM = 16;
+    RCC_OscInitStruct.PLL.PLLN = 336;
+    RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV4;
+    RCC_OscInitStruct.PLL.PLLQ = 7;
+    if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+    {
+        Error_Handler();
+    }
+
+    /** Initializes the CPU, AHB and APB buses clocks */
+    RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
+                                |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+    RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+    RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+    RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
+    RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
+
+    if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
+    {
+        Error_Handler();
+    }
+}
+
+/* Error Handler */
+void Error_Handler(void)
+{
+    while (1)
+    {
+    }
+}
+
+void MX_TIM2_Init(void)
+{
+    TIM_IC_InitTypeDef sConfigIC = {0};
+
+    htim2.Instance = TIM2;
+    htim2.Init.Prescaler = 0;
+    htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+    htim2.Init.Period = 65535;
+    htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+    htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+    if (HAL_TIM_IC_Init(&htim2) != HAL_OK)
+    {
+        Error_Handler();
+    }
+
+    sConfigIC.ICPolarity = TIM_INPUTCHANNELPOLARITY_RISING;
+    sConfigIC.ICSelection = TIM_ICSELECTION_DIRECTTI;
+    sConfigIC.ICPrescaler = TIM_ICPSC_DIV1;
+    sConfigIC.ICFilter = 0;
+    if (HAL_TIM_IC_ConfigChannel(&htim2, &sConfigIC, TIM_CHANNEL_1) != HAL_OK)
+    {
+        Error_Handler();
+    }
+}
+
+void MX_USART2_UART_Init(void)
+{
+    huart2.Instance = USART2;
+    huart2.Init.BaudRate = 9600;
+    huart2.Init.WordLength = UART_WORDLENGTH_8B;
+    huart2.Init.StopBits = UART_STOPBITS_1;
+    huart2.Init.Parity = UART_PARITY_NONE;
+    huart2.Init.Mode = UART_MODE_TX_RX;
+    huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+    huart2.Init.OverSampling = UART_OVERSAMPLING_16;
+    if (HAL_UART_Init(&huart2) != HAL_OK)
+    {
+        Error_Handler();
+    }
+}
+
+void MX_GPIO_Init(void)
+{
+    GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+    /* GPIO Ports Clock Enable */
+    __HAL_RCC_GPIOA_CLK_ENABLE();
+
+    /*Configure GPIO pin : PA0 (TIM2 CH1 for PWM Input) */
+    GPIO_InitStruct.Pin = GPIO_PIN_0;
+    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    GPIO_InitStruct.Alternate = GPIO_AF1_TIM2;
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+    /*Configure GPIO pin : PA2 (USART2 TX) */
+    GPIO_InitStruct.Pin = GPIO_PIN_2;
+    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    GPIO_InitStruct.Alternate = GPIO_AF7_USART2;
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+}
+
+
+

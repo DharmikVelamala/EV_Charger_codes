@@ -1,0 +1,25 @@
+10:16:05 **** Incremental Build of configuration Debug for project ISO_15118 ****
+make -j8 all 
+arm-none-eabi-gcc "../Core/Src/main.c" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32F446xx -c -I../Core/Inc -I../Drivers/STM32F4xx_HAL_Driver/Inc -I../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32F4xx/Include -I../Drivers/CMSIS/Include -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/Src/main.d" -MT"Core/Src/main.o" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "Core/Src/main.o"
+../Core/Src/main.c: In function 'send_uart_response':
+../Core/Src/main.c:75:56: warning: implicit declaration of function 'strlen' [-Wimplicit-function-declaration]
+   75 |     HAL_UART_Transmit(&huart2, (uint8_t *)uart_buffer, strlen(uart_buffer), HAL_MAX_DELAY);
+      |                                                        ^~~~~~
+../Core/Src/main.c:75:56: warning: incompatible implicit declaration of built-in function 'strlen'
+../Core/Src/main.c:7:1: note: include '<string.h>' or provide a declaration of 'strlen'
+    6 | #include <stdio.h>
+  +++ |+#include <string.h>
+    7 | 
+arm-none-eabi-gcc -o "ISO_15118.elf" @"objects.list"   -mcpu=cortex-m4 -T"C:\Users\dharmik.v\Desktop\STM\ISO_15118\STM32F446RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="ISO_15118.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+c:\st\stm32cubeide_1.12.0\stm32cubeide\plugins\com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.10.3-2021.10.win32_1.0.200.202301161003\tools\arm-none-eabi\bin\ld.exe: ./Core/Src/main.o: in function `MX_GPIO_Init':
+C:/Users/dharmik.v/Desktop/STM/ISO_15118/Debug/../Core/Src/main.c:168: multiple definition of `MX_GPIO_Init'; ./Core/Src/gpio.o:C:/Users/dharmik.v/Desktop/STM/ISO_15118/Debug/../Core/Src/gpio.c:43: first defined here
+c:\st\stm32cubeide_1.12.0\stm32cubeide\plugins\com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.10.3-2021.10.win32_1.0.200.202301161003\tools\arm-none-eabi\bin\ld.exe: ./Core/Src/tim.o: in function `MX_TIM2_Init':
+C:/Users/dharmik.v/Desktop/STM/ISO_15118/Debug/../Core/Src/tim.c:31: multiple definition of `MX_TIM2_Init'; ./Core/Src/main.o:C:/Users/dharmik.v/Desktop/STM/ISO_15118/Debug/../Core/Src/main.c:127: first defined here
+c:\st\stm32cubeide_1.12.0\stm32cubeide\plugins\com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.10.3-2021.10.win32_1.0.200.202301161003\tools\arm-none-eabi\bin\ld.exe: ./Core/Src/usart.o: in function `MX_USART2_UART_Init':
+C:/Users/dharmik.v/Desktop/STM/ISO_15118/Debug/../Core/Src/usart.c:32: multiple definition of `MX_USART2_UART_Init'; ./Core/Src/main.o:C:/Users/dharmik.v/Desktop/STM/ISO_15118/Debug/../Core/Src/main.c:152: first defined here
+collect2.exe: error: ld returned 1 exit status
+make: *** [makefile:64: ISO_15118.elf] Error 1
+"make -j8 all" terminated with exit code 2. Build might be incomplete.
+
+10:16:07 Build Failed. 7 errors, 2 warnings. (took 2s.334ms)
+

@@ -1,0 +1,14 @@
+#include "tim.h"
+
+int main(void)
+{
+    HAL_Init();
+    SystemClock_Config();
+    MX_TIM_Init();  // Initialize the timer
+
+    while (1)
+    {
+        // Your main loop code
+    }
+}
+

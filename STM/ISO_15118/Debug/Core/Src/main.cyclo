@@ -1,0 +1,8 @@
+main.c:20:5:main	1
+main.c:51:7:calculate_voltage	8
+main.c:72:6:send_uart_response	1
+main.c:79:6:SystemClock_Config	3
+main.c:119:6:Error_Handler	1
+main.c:126:6:MX_TIM2_Init	3
+main.c:151:6:MX_USART2_UART_Init	2
+main.c:167:6:MX_GPIO_Init	1

@@ -1,0 +1,111 @@
+#include "main.h"
+
+// Define GPIO pins for signals
+#define CP_PIN GPIO_PIN_0      // PA0: Control Pilot (from charger)
+#define SLAC_PIN GPIO_PIN_1    // PA1: SLAC signal (from charger)
+#define AUTH_PIN GPIO_PIN_2    // PA2: Authorization request (from charger)
+#define V2G_PIN GPIO_PIN_3     // PA3: V2G communication (from charger)
+#define EV_RESP_PIN GPIO_PIN_4 // PA4: EV response (to charger)
+
+// Define GPIO ports for signals
+#define SIGNAL_PORT GPIOA
+
+void SystemClock_Config(void);
+static void MX_GPIO_Init(void);
+
+int main(void) {
+  // Initialize the HAL Library
+  HAL_Init();
+s
+  // Configure the system clock
+  SystemClock_Config();
+
+  // Initialize all configured peripherals (GPIO)
+  MX_GPIO_Init();
+
+  // EV communication loop
+  while (1) {
+    // Wait for the Control Pilot (CP) signal
+    if (HAL_GPIO_ReadPin(SIGNAL_PORT, CP_PIN) == GPIO_PIN_SET) {
+      HAL_GPIO_TogglePin(SIGNAL_PORT, EV_RESP_PIN); // Simulate SLAC response
+      HAL_Delay(2000);  // Wait for manual input (simulated with delay)
+      HAL_GPIO_WritePin(SIGNAL_PORT, EV_RESP_PIN, GPIO_PIN_RESET);
+    }
+
+    // Wait for SLAC Signal from charger
+    if (HAL_GPIO_ReadPin(SIGNAL_PORT, SLAC_PIN) == GPIO_PIN_SET) {
+      HAL_GPIO_TogglePin(SIGNAL_PORT, EV_RESP_PIN); // Simulate network setup response
+      HAL_Delay(2000);  // Simulate delay for manual response
+      HAL_GPIO_WritePin(SIGNAL_PORT, EV_RESP_PIN, GPIO_PIN_RESET);
+    }
+
+    // Wait for Authorization Request from charger
+    if (HAL_GPIO_ReadPin(SIGNAL_PORT, AUTH_PIN) == GPIO_PIN_SET) {
+      HAL_GPIO_TogglePin(SIGNAL_PORT, EV_RESP_PIN); // Simulate authorization response
+      HAL_Delay(2000);  // Simulate delay for manual response
+      HAL_GPIO_WritePin(SIGNAL_PORT, EV_RESP_PIN, GPIO_PIN_RESET);
+    }
+
+    // Wait for V2G Communication start from charger
+    if (HAL_GPIO_ReadPin(SIGNAL_PORT, V2G_PIN) == GPIO_PIN_SET) {
+      HAL_GPIO_TogglePin(SIGNAL_PORT, EV_RESP_PIN); // Simulate V2G communication response
+      HAL_Delay(2000);  // Simulate delay for manual response
+      HAL_GPIO_WritePin(SIGNAL_PORT, EV_RESP_PIN, GPIO_PIN_RESET);
+    }
+  }
+}
+
+// GPIO Initialization Function
+static void MX_GPIO_Init(void) {
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+  // GPIO Ports Clock Enable
+  __HAL_RCC_GPIOA_CLK_ENABLE();
+
+  // Configure GPIO pin output level for EV response
+  HAL_GPIO_WritePin(SIGNAL_PORT, EV_RESP_PIN, GPIO_PIN_RESET);
+
+  // Configure GPIO pins: PA0 PA1 PA2 PA3 as inputs (CP, SLAC, AUTH, V2G)
+  GPIO_InitStruct.Pin = CP_PIN | SLAC_PIN | AUTH_PIN | V2G_PIN;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(SIGNAL_PORT, &GPIO_InitStruct);
+
+  // Configure GPIO pin PA4 as output (EV Response)
+  GPIO_InitStruct.Pin = EV_RESP_PIN;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(SIGNAL_PORT, &GPIO_InitStruct);
+}
+
+// System Clock Configuration
+void SystemClock_Config(void) {
+  RCC_OscInitTypeDef RCC_OscInitStruct = {0};
+  RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+
+  // Configure the main internal regulator output voltage
+  __HAL_RCC_PWR_CLK_ENABLE();
+  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
+
+  // Initializes the RCC Oscillators according to the specified parameters
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
+  RCC_OscInitStruct.PLL.PLLM = 16;
+  RCC_OscInitStruct.PLL.PLLN = 336;
+  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV4;
+  RCC_OscInitStruct.PLL.PLLQ = 7;
+  HAL_RCC_OscConfig(&RCC_OscInitStruct);
+
+  // Initializes the CPU, AHB and APB buses clocks
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK
+                              | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
+  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
+  HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2);
+}

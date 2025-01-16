@@ -1,0 +1,20 @@
+#include "tim.h"
+
+TIM_HandleTypeDef htim2;  // Example for TIM2
+
+void MX_TIM_Init(void)
+{
+    // Enable the timer clock
+    __HAL_RCC_TIM2_CLK_ENABLE();
+
+    // Configure the timer
+    htim2.Instance = TIM2;
+    htim2.Init.Prescaler = 8399; // Assuming 84 MHz clock (with 1s overflow)
+    htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+    htim2.Init.Period = 9999;     // Adjust based on desired frequency
+    htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+    HAL_TIM_Base_Init(&htim2);
+
+    // Start the timer
+    HAL_TIM_Base_Start(&htim2);
+}

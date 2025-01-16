@@ -1,0 +1,94 @@
+#include "main.h"
+#include <string.h>  // For strlen function
+
+// Add UART Handle
+UART_HandleTypeDef huart2;
+
+// Function prototypes
+void SystemClock_Config(void);
+static void MX_GPIO_Init(void);
+static void MX_ADC1_Init(void);
+static void MX_USART2_UART_Init(void);
+void UART_Print(char* message); // Function to print to UART
+
+int main(void)
+{
+    /* Initialize the HAL Library */
+    HAL_Init();
+
+    /* Configure the system clock */
+    SystemClock_Config();
+
+    /* Initialize all configured peripherals */
+    MX_GPIO_Init();
+    MX_ADC1_Init();
+    MX_USART2_UART_Init(); // Initialize UART
+
+    /* Infinite loop */
+    while (1)
+    {
+        // Start ADC conversion
+        HAL_ADC_Start(&hadc1);
+
+        // Poll for conversion completion
+        if (HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY) == HAL_OK)
+        {
+            // Get ADC value
+            adc_value = HAL_ADC_GetValue(&hadc1);
+            cp_voltage = (adc_value * 3.3) / 4095.0;
+
+            // Print voltage to terminal
+            char message[50]; // Buffer to hold the message
+            sprintf(message, "CP Voltage: %.2f V\n", cp_voltage);
+            UART_Print(message); // Call UART print function
+
+            // Interpret CP voltage based on ISO 15118 standard
+            if (cp_voltage >= 3.0)
+            {
+                UART_Print("State: EV Disconnected\n");
+            }
+            else if (cp_voltage >= 2.0)
+            {
+                UART_Print("State: EV Detected\n");
+            }
+            else if (cp_voltage >= 1.5)
+            {
+                UART_Print("State: EV Ready to Charge\n");
+            }
+            else if (cp_voltage >= 0.8)
+            {
+                UART_Print("State: Charging in Progress\n");
+            }
+            else
+            {
+                UART_Print("State: Fault or Unknown\n");
+            }
+        }
+
+        // Small delay for next ADC reading
+        HAL_Delay(100);
+    }
+}
+
+/* UART Initialization Function */
+static void MX_USART2_UART_Init(void)
+{
+    huart2.Instance = USART2; // Select USART2 instance
+    huart2.Init.BaudRate = 9600; // Set baud rate to 9600
+    huart2.Init.WordLength = UART_WORDLENGTH_8B; // 8-bit word length
+    huart2.Init.StopBits = UART_STOPBITS_1; // 1 stop bit
+    huart2.Init.Parity = UART_PARITY_NONE; // No parity
+    huart2.Init.Mode = UART_MODE_TX_RX; // Enable transmitter and receiver
+    huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE; // No hardware flow control
+    huart2.Init.OverSampling = UART_OVERSAMPLING_16; // 16 times oversampling
+    if (HAL_UART_Init(&huart2) != HAL_OK)
+    {
+        Error_Handler();
+    }
+}
+
+/* UART Print Function */
+void UART_Print(char* message)
+{
+    HAL_UART_Transmit(&huart2, (uint8_t*)message, strlen(message), HAL_MAX_DELAY);
+}
